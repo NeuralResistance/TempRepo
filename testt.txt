@@ -1,0 +1,89 @@
+"Create a skills/ folder in the project root with the following files. First, skills/README.md explaining that skills are instruction sets for both the GitHub Copilot agent and the future Data Dictionary Builder agent — each skill file tells the agent exactly how to perform one type of task, what inputs it needs, what output it must produce, and what rules it must follow. Second, skills/column_lineage_skill.md with the following instruction set:"
+
+Column Lineage Skill
+
+Goal: Trace every Ultracs field from its source position in a BASIC program through HVR .param column mappings to its Snowflake column name. Output a JSON payload and an interactive HTML graph.
+
+Inputs required:
+- output/hvr_param_metadata.json — 95 column mappings already extracted
+- output/account_table_lineage.json — table level graph for structural context
+- src/lineage/data_lineage_schema.md — authoritative schema
+
+Steps:
+1. Load hvr_param_metadata.json. For each column mapping record the Ultracs field position, the .param column name, and the Snowflake column name it maps to.
+2. For each column find its parent EXTRACT_FILE node in account_table_lineage.json using the extract file name.
+3. Follow the EXTRACT_FILE forward edges (CARRIED_BY, COPIES_TO, LANDS_IN, LOADS_TO) to find the SNOWFLAKE_RELATION it lands in.
+4. The column lineage record is: Ultracs position → .param column name → Snowflake table → Snowflake column.
+5. Output to output/column_lineage.json following the column lineage JSON schema in skills/json_payload_skill.md.
+6. Output to output/column_lineage.html following the rendering rules in skills/html_graph_render_skill.md.
+
+Rules:
+- Never claim a Snowflake column exists unless the .param file explicitly names it
+- Mark Account_Index_ID as confidence=inferred — it is a composite of Account + Prod positions 1 and 2
+- Keep column lineage output separate from table lineage — do not merge the JSON files
+- Every record must have a source_path pointing to the file that defines it
+
+Third, skills/json_payload_skill.md with this column lineage JSON schema:
+
+Each record in column_lineage.json must follow this structure:
+field_id: ultracs:SAVINGS_ACCOUNT:DWACC:[position]
+ultracs_position: integer
+ultracs_program: the .b filename
+extract_file: the extract file name
+param_column: the column name in the .param file
+snowflake_table: the SNOWFLAKE_RELATION key from table lineage
+snowflake_column: the physical column name in Snowflake
+confidence: confirmed or inferred
+source_path: path to the .param file that defines this mapping
+notes: any caveats
+
+Fourth, skills/graph_traversal_skill.md with these traversal rules:
+
+Goal: Answer lineage questions by traversing account_table_lineage.json and column_lineage.json.
+
+Traversal rules:
+- Forward traversal (source to consumer): follow edges in stored direction except READS_FROM and DEPENDS_ON which must be reversed
+- Backward traversal (consumer to source): reverse all edges
+- Never cross is_boundary_node=true nodes — lineage stops there
+- Never join the direct HVR route and the S3 route — they are separate branches
+- Always report confidence on every hop
+- Flag any hop where confidence=inferred and include the reason
+
+Standard queries the agent must be able to answer:
+Q1 — Where does this Ultracs field end up in Snowflake?
+Traverse forward from MV_FILE → PROGRAM → EXTRACT_FILE → HVR_CHANNEL → SNOWFLAKE_RELATION
+Q2 — What Ultracs fields feed this Snowflake table?
+Traverse backward from SNOWFLAKE_RELATION → reverse LOADS_TO → reverse COPIES_TO → EXTRACT_FILE → reverse WRITES_TO → PROGRAM → reverse READS_FROM → MV_FILE
+Q3 — What breaks if this extract file changes?
+Find the EXTRACT_FILE node, follow all outgoing edges forward, list every SNOWFLAKE_RELATION reached
+
+Fifth, skills/html_graph_render_skill.md with these rendering rules:
+
+Goal: Render column_lineage.json and account_table_lineage.json as a single interactive HTML graph using vis.js network — no external dependencies beyond a CDN link.
+
+Node colours by entity type:
+MV_FILE: coral
+PROGRAM: amber
+EXTRACT_FILE: amber
+HVR_CHANNEL: purple
+S3_PATH: gray
+DBT_SOURCE: teal
+DBT_MODEL: teal
+SNOWFLAKE_RELATION: blue
+SCHEMACHANGE_MIGRATION: gray
+
+Node size: boundary nodes are larger. Entrypoint nodes have a double border.
+
+Edge labels: show edge_type on hover only — not by default as it clutters the graph.
+
+Click behaviour: clicking any node shows a side panel with all its properties including source_path, confidence, layer, and any column mappings attached as metadata.
+
+Confidence visual: INFERRED edges render as dashed lines. CONFIRMED edges render as solid.
+
+Filters the user can toggle: filter by layer (source/extract/landing/internal/public), filter by confidence (confirmed only), filter by route (direct HVR only / S3 route only).
+
+After creating all five files confirm the skills/ folder exists and list the files created."
+
+Once Copilot confirms the skills folder is created, the next prompt is short:
+
+"Run the column_lineage_skill from skills/column_lineage_skill.md. Use hvr_param_metadata.json as the primary input. Produce output/column_lineage.json and output/column_lineage.html."
