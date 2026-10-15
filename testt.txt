@@ -1,13 +1,51 @@
-“Read output/account_table_lineage.json and output/table_lineage.json. Count and report the following: total nodes broken down by entity_type, total edges broken down by edge_type, and for each edge_type show how many edges exist. Output this as a clean markdown table to output/graph_inventory.md. Do not interpret anything — just count and report exactly what is in the files.”
-
-Prompt 2 — Confidence breakdown
-
-“Read output/account_table_lineage.json, output/table_lineage.json, and output/column_lineage.json. For every edge in all three files, group by confidence value and report: how many edges are confirmed, how many are inferred, how many have any other confidence value, and how many have no confidence property at all. Then break this down by edge_type — show the confidence distribution within each relationship type. Add a section listing every edge where confidence is missing or unrecognised. Output to output/graph_inventory.md as a new section called Confidence Breakdown.”
-
-Prompt 3 — Graph cleaning
-
-“Read output/account_table_lineage.json and src/lineage/data_lineage_schema.md. Check every node and edge against the authoritative schema. Flag and fix the following issues: any node whose entity_type is not in the schema, any edge whose edge_type is not in the schema, any node missing required properties (key, entity_type, platform, layer), any edge missing required properties (source_key, target_key, edge_type, confidence), any edge whose source_key or target_key does not match an existing node key, and any duplicate nodes with the same key. For each issue found report what it was and what was done to fix it. Save the cleaned graph to output/account_table_lineage_clean.json and output the fix report to output/graph_cleaning_report.md.”
-
-Prompt 4 — Senior engineer summary
-
-“Read output/graph_inventory.md and output/graph_cleaning_report.md. Write a plain English summary at output/graph_summary_for_review.md that answers these questions in order: how many nodes and relationships does the graph contain, what types of nodes and relationships exist, what is the confidence breakdown and what does each level mean, what issues were found and fixed during cleaning, and what open questions remain. Keep it under one page. Use plain language — no JSON, no code. This document will be reviewed by a senior engineer.”
+For each graph that we created we need to have data dictionary. Please have a look:
+🗂️ Data Dictionary Structure
+1. Asset-Level Fields (one row per table/dataset)
+These describe the data asset as a whole.
+Field	Description	Example
+Asset Name	Table or dataset name	customer_orders
+Source System	Where it originates	Salesforce, PostgreSQL, S3
+Layer	Where it sits in your stack	Raw, Staging, Mart
+Domain	Business area it belongs to	Sales, Finance, Product
+Owner	Team or person responsible	Data Engineering
+Steward	Business-side contact	Sales Ops Manager
+Description	Plain-language summary	"Contains all orders placed by customers since 2020"
+Update Frequency	How often it refreshes	Daily, Real-time, Weekly
+Row Count (approx.)	Scale indicator	~4M rows
+Lineage Reference	Link to lineage diagram	URL or doc reference
+PII / Sensitivity	Data classification	PII, Confidential, Public
+Status	Is it active?	Active, Deprecated, In Review
+2. Field-Level Fields (one row per column/attribute)
+These are the core of the dictionary — one entry per field in each asset.
+Field	Description	Example
+Asset Name	Parent table name	customer_orders
+Field Name	Column name as it appears in the system	cust_id
+Business Name	Human-readable label	Customer ID
+Data Type	Technical type	VARCHAR(36), INTEGER, TIMESTAMP
+Description	What this field means in business terms	"Unique identifier for the customer, sourced from Salesforce"
+Source Field	Original field from upstream (from lineage)	Salesforce → Account.Id
+Transformation Logic	Any rule applied	UPPER(TRIM(raw_id))
+Sample Values	Helps readers understand the data	C-00123, C-00456
+Allowed Values / Enum	For categorical fields	ACTIVE, INACTIVE, PENDING
+Nullable?	Can it be null	Yes / No
+Is PII?	Personal data flag	Yes / No
+Is Primary Key?	Unique identifier flag	Yes / No
+Foreign Key Reference	Links to another table	customers.cust_id
+Business Rules	Validation logic or conditions	"Must not be null if status = ACTIVE"
+Last Verified Date	When the entry was last reviewed	2024-10-01
+Notes	Any edge cases or known issues	"Legacy records pre-2021 may use old format"
+3. Relationship / Lineage Fields (links dictionary to lineage)
+Since lineage is already built, these tie the two together.
+Field	Description
+Upstream Sources	What feeds this asset
+Downstream Consumers	Who/what uses this asset
+Transformation Step	dbt model, ETL job, or pipeline name
+Dependency Notes	Any critical dependencies to be aware of
+💡 Recommended Tab Structure (if using a spreadsheet)
+Tab 1: README         → How to use the dictionary
+Tab 2: Asset Registry → One row per table/dataset
+Tab 3: Field Catalog  → One row per field (bulk of the work)
+Tab 4: Glossary       → Business terms and definitions
+Tab 5: Change Log     → Track updates over time
+Where to start: Pull your asset list from the lineage you've built → populate Asset-Level fields first → then drill into Field-Level for your highest-priority or most-used tables.
+Generate a Excel/CSV template with these fields?
