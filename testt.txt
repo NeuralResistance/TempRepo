@@ -1,1 +1,39 @@
-Read @src/lineage/data_lineage_schema.md and @skills/graph_traversal_skill.md. Implement query_tools/tools.py with three named query functions that traverse output/account_table_lineage.json. Function 1: get_field_lineage(field_name) — returns the full path from MV_FILE through to SNOWFLAKE_RELATION for a given field, respecting edge direction rules in the traversal skill. Function 2: get_consumers(extract_file) — returns all SNOWFLAKE_RELATION nodes reachable from a given EXTRACT_FILE node. Function 3: get_alias_chain(field_name) — returns all alias names a field has accumulated across layers with their confidence values. Each function must return a structured dict with nodes, edges, and confidence on every hop. Add three tests to the test suite — one per function — using the DWACC/ACCOUNT data already in the graph. All 12 existing tests must still pass after adding the new ones.
+# Schema Node Groups
+
+## Group 1: Source
+Generic label: "Source"
+Expands to: MV_FILE
+
+## Group 2: Extract
+Generic label: "Extract"
+Expands to: Extract_PROGRAM, Extract_FILE
+
+## Group 3: Staging Movement
+Generic label: "Staging Movement"
+Expands to: HVR_CHANNEL, HVR_LOCATION
+
+## Group 4: Transform Jobs
+Generic label: "Transform Jobs"
+Expands to: AIRFLOW_DAG, AIRFLOW_TASK, 
+            DBT_MODEL, SCHEMACHANGE_MIGRATION, CDP_PRODUCT
+
+## Group 5: Destination
+Generic label: "Destination"
+Expands to: S3_PATH, SNOWFLAKE_RELATION
+
+
+Prompt 1 — Replace the schema section with collapsed nodes
+
+“Find the schema overview section in the existing findings/demo HTML. Replace the current vis.js force-directed graph in that section with a new interactive schema diagram. The new diagram shows exactly three generic nodes rendered as large green rounded rectangles matching the existing green colour scheme: Program / File, Job, and Landing Area. These three nodes are arranged left to right with arrows flowing between them showing the general data direction. Each node shows only its generic label and a small expand icon — no internal node names, no relationship details, no private information. Below each node show a subtle label: click to expand. This collapsed state is the default view.”
+
+Prompt 2 — Add expand on click
+
+“When a user clicks any of the three generic nodes in the schema overview, the node expands in place to reveal the technical nodes inside it using the mapping in @docs/schema_node_groups.md. Program / File expands to show MV_FILE, Extract_PROGRAM, Extract_FILE, AIRFLOW_DAG as smaller ovals inside or below the parent rectangle. Job expands to show HVR_CHANNEL, AIRFLOW_TASK, DBT_MODEL, SCHEMACHANGE_MIGRATION. Landing Area expands to show HVR_LOCATION, S3_PATH, SNOWFLAKE_RELATION. The expanded nodes use the same oval shape and green colour as the existing How Data Moves diagram. Clicking the expanded node again collapses it back to the generic rectangle. Only one group needs to be expanded at a time — expanding a second group collapses the first.”
+
+Prompt 3 — Preserve the node and relationship inspector
+
+“The existing node and relationship inspector panel must still work in the expanded state. When a user has expanded a group and clicks on one of the individual technical nodes inside it — for example DBT_MODEL — the inspector panel opens and shows that node’s properties exactly as before. When the group is collapsed the inspector is hidden. Do not remove or modify any inspector logic — only the visual grouping layer is new.”
+
+Prompt 4 — Add a toggle between views
+
+“Add two small toggle buttons above the schema overview section: Schema view and Detail view. Schema view is the default and shows the three collapsed generic nodes. Detail view shows the original full vis.js graph exactly as it was before this change — nothing removed from it, just hidden behind the toggle. This preserves the full graph for technical users while keeping the default view clean and business-friendly. Label the toggle clearly so presenters can switch between views during a demo.”
