@@ -1,39 +1,11 @@
-# Schema Node Groups
-
-## Group 1: Source
-Generic label: "Source"
-Expands to: MV_FILE
-
-## Group 2: Extract
-Generic label: "Extract"
-Expands to: Extract_PROGRAM, Extract_FILE
-
-## Group 3: Staging Movement
-Generic label: "Staging Movement"
-Expands to: HVR_CHANNEL, HVR_LOCATION
-
-## Group 4: Transform Jobs
-Generic label: "Transform Jobs"
-Expands to: AIRFLOW_DAG, AIRFLOW_TASK, 
-            DBT_MODEL, SCHEMACHANGE_MIGRATION, CDP_PRODUCT
-
-## Group 5: Destination
-Generic label: "Destination"
-Expands to: S3_PATH, SNOWFLAKE_RELATION
-
-
-Prompt 1 — Replace the schema section with collapsed nodes
-
-“Find the schema overview section in the existing findings/demo HTML. Replace the current vis.js force-directed graph in that section with a new interactive schema diagram. The new diagram shows exactly three generic nodes rendered as large green rounded rectangles matching the existing green colour scheme: Program / File, Job, and Landing Area. These three nodes are arranged left to right with arrows flowing between them showing the general data direction. Each node shows only its generic label and a small expand icon — no internal node names, no relationship details, no private information. Below each node show a subtle label: click to expand. This collapsed state is the default view.”
-
 Prompt 2 — Add expand on click
 
-“When a user clicks any of the three generic nodes in the schema overview, the node expands in place to reveal the technical nodes inside it using the mapping in @docs/schema_node_groups.md. Program / File expands to show MV_FILE, Extract_PROGRAM, Extract_FILE, AIRFLOW_DAG as smaller ovals inside or below the parent rectangle. Job expands to show HVR_CHANNEL, AIRFLOW_TASK, DBT_MODEL, SCHEMACHANGE_MIGRATION. Landing Area expands to show HVR_LOCATION, S3_PATH, SNOWFLAKE_RELATION. The expanded nodes use the same oval shape and green colour as the existing How Data Moves diagram. Clicking the expanded node again collapses it back to the generic rectangle. Only one group needs to be expanded at a time — expanding a second group collapses the first.”
+“When a user clicks any of the five generic nodes in the schema overview, the node expands in place to reveal the technical nodes inside it using the mapping in @docs/schema_node_groups.md. Source expands to show MV_FILE. Extract expands to show PROGRAM and Extract_FILE. Staging expands to show HVR_CHANNEL and HVR_LOCATION. Jobs expands to show AIRFLOW_DAG, AIRFLOW_TASK, DBT_MODEL, SCHEMACHANGE_MIGRATION and CDP_PRODUCT. Target expands to show S3_PATH and SNOWFLAKE_RELATION. All expanded technical nodes use the same oval shape and green colour as the existing How Data Moves diagram. Clicking an expanded node again collapses it back to its generic rectangle. Only one group can be expanded at a time — expanding a second group automatically collapses the previously expanded one. Arrows between the five generic nodes remain visible at all times regardless of expanded or collapsed state.”
 
 Prompt 3 — Preserve the node and relationship inspector
 
-“The existing node and relationship inspector panel must still work in the expanded state. When a user has expanded a group and clicks on one of the individual technical nodes inside it — for example DBT_MODEL — the inspector panel opens and shows that node’s properties exactly as before. When the group is collapsed the inspector is hidden. Do not remove or modify any inspector logic — only the visual grouping layer is new.”
+“The existing node and relationship inspector panel must still work when any of the five groups are in their expanded state. When a user expands a group and clicks on one of the individual technical nodes inside it — for example DBT_MODEL inside Jobs, SNOWFLAKE_RELATION inside Target, or HVR_CHANNEL inside Staging — the inspector panel opens and shows that node’s properties exactly as before. When a group is collapsed the individual technical nodes inside it are not clickable and the inspector does not open. The inspector must never reveal private node content when a group is in its collapsed state — only the generic group label is visible at that point. Do not remove or modify any existing inspector logic — only the visibility rules based on collapsed or expanded state are new.”
 
 Prompt 4 — Add a toggle between views
 
-“Add two small toggle buttons above the schema overview section: Schema view and Detail view. Schema view is the default and shows the three collapsed generic nodes. Detail view shows the original full vis.js graph exactly as it was before this change — nothing removed from it, just hidden behind the toggle. This preserves the full graph for technical users while keeping the default view clean and business-friendly. Label the toggle clearly so presenters can switch between views during a demo.”
+“Add two small toggle buttons above the schema overview section: Schema view and Detail view. Schema view is the default and shows the five collapsed generic nodes — Source, Extract, Staging, Jobs, Target — with arrows between them. Detail view shows the original full graph exactly as it was before this change — nothing removed from it, just hidden behind the toggle. Label the toggle clearly so presenters can switch between views during a demo without any setup.”
